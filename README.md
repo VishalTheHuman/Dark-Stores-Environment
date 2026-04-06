@@ -103,14 +103,6 @@ Three tasks of increasing difficulty, each with a deterministic seed for reprodu
 | `concurrent_orders` | Medium | 123 | 30 | 5 (waves) | 3 | Prioritization, batch delivery (2 eligible pairs) |
 | `full_operations` | Hard | 456 | 40 | 10 | 2+1 | Stockouts (coke, juice at 0), bread expires tick 3, restocking |
 
-### Baseline Scores
-
-| Task | Max Theoretical Reward | Baseline Target |
-|---|---|---|
-| `single_order` | ~9.30 | Score approaching 1.0 with optimal play |
-| `concurrent_orders` | ~52.0 | Requires batching and wave management |
-| `full_operations` | ~100.0 | Requires restocking, expiry management, and tight scheduling |
-
 ## Reward Function
 
 | Event | Reward |
