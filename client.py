@@ -12,7 +12,10 @@ from openenv.core import EnvClient
 from openenv.core.client_types import StepResult
 from openenv.core.env_server.types import State
 
-from .models import DarkStoreAction, DarkStoreObservation
+try:
+    from .models import DarkStoreAction, DarkStoreObservation
+except (ImportError, ModuleNotFoundError):
+    from models import DarkStoreAction, DarkStoreObservation
 
 
 class DarkStoreClient(

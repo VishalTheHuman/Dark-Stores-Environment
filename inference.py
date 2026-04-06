@@ -23,8 +23,8 @@ from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
-from my_env import DarkStoreAction, DarkStoreClient
-from my_env.server.dark_store_environment import DarkStoreEnvironment
+from models import DarkStoreAction
+from server.dark_store_environment import DarkStoreEnvironment
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -272,6 +272,7 @@ async def main() -> None:
 
     # Use Docker image if IMAGE_NAME is set, otherwise run directly
     if IMAGE_NAME:
+        from client import DarkStoreClient
         env = await DarkStoreClient.from_docker_image(IMAGE_NAME)
     else:
         env = DarkStoreEnvironment()
