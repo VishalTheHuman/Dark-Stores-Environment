@@ -30,10 +30,12 @@ from server.dark_store_environment import DarkStoreEnvironment
 # Configuration
 # ---------------------------------------------------------------------------
 
-IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME") or os.getenv("IMAGE_NAME")
-API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
-API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
-MODEL_NAME = os.getenv("MODEL_NAME") or "meta-llama/Llama-3.2-1B-Instruct"
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "openai/gpt-oss-20b")
+HF_TOKEN = os.getenv("HF_TOKEN")
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+
+API_KEY = HF_TOKEN  # OpenAI client uses this as the api_key
 BENCHMARK = "dark_store"
 TASKS = ["single_order", "concurrent_orders", "full_operations"]
 TEMPERATURE = 0.3
@@ -270,10 +272,10 @@ async def main() -> None:
     """Run all 3 tasks sequentially."""
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
-    # Use Docker image if IMAGE_NAME is set, otherwise run directly
-    if IMAGE_NAME:
+    # Use Docker image if LOCAL_IMAGE_NAME is set, otherwise run directly
+    if LOCAL_IMAGE_NAME:
         from client import DarkStoreClient
-        env = await DarkStoreClient.from_docker_image(IMAGE_NAME)
+        env = await DarkStoreClient.from_docker_image(LOCAL_IMAGE_NAME)
     else:
         env = DarkStoreEnvironment()
 
