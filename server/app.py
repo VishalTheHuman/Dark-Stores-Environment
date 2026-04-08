@@ -30,8 +30,8 @@ Usage:
 
 import os
 
-# Enable the Gradio web interface at /web
-os.environ.setdefault("ENABLE_WEB_INTERFACE", "true")
+# Disable the default Gradio web interface at /web
+os.environ["ENABLE_WEB_INTERFACE"] = "false"
 
 # Point the web interface to our README for the sidebar (strip frontmatter)
 _readme_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "README.md")
@@ -71,6 +71,77 @@ app = create_app(
     env_name="dark_store",
     max_concurrent_envs=1,
 )
+
+# Custom Gradio Dashboard matching /ui
+import gradio as gr
+from server.gradio_ui import demo
+app = gr.mount_gradio_app(app, demo, path="/web")
+
+from fastapi.staticfiles import StaticFiles
+import os
+
+ui_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui")
+app.mount("/ui", StaticFiles(directory=ui_dir, html=True), name="ui")
+
+from fastapi import WebSocket, WebSocketDisconnect
+from openai import OpenAI
+import asyncio
+
+@app.websocket("/ws/infer")
+async def ws_infer(websocket: WebSocket):
+    await websocket.accept()
+    from custom_inference import get_llm_action, action_to_str, SYSTEM_PROMPT
+    import custom_inference as inference
+    env = DarkStoreEnvironment()
+    
+    try:
+        while True:
+            data = await websocket.receive_json()
+            if data.get("command") == "START":
+                api_key = data.get("api_key")
+                base_url = data.get("base_url")
+                model = data.get("model")
+                task = data.get("task", "single_order")
+                
+                client = OpenAI(base_url=base_url, api_key=api_key)
+                inference.MODEL_NAME = model  # Ensure internal consistency
+                
+                obs = env.reset(task=task)
+                last_error = obs.error
+                
+                await websocket.send_json({"type": "state", "observation": obs.dict()})
+                await websocket.send_json({"type": "log", "message": f"[START] task={task} model={model}"})
+                
+                tick_budget = obs.tick + obs.ticks_remaining
+                
+                for step in range(1, tick_budget + 2):
+                    if obs.done:
+                        break
+                    
+                    await websocket.send_json({"type": "log", "message": f"⏳ [AGENT THINKING...] Step {step}"})
+                    action = await asyncio.to_thread(get_llm_action, client, obs.text, last_error)
+                    
+                    await websocket.send_json({"type": "log", "message": f"🚀 [ACTION] {action_to_str(action)}"})
+                    
+                    obs = env.step(action)
+                    last_error = obs.error
+                    
+                    await websocket.send_json({"type": "state", "observation": obs.dict()})
+                    await asyncio.sleep(0.5)
+                    
+                    if obs.done:
+                        break
+                        
+                score = env.compute_score()
+                await websocket.send_json({"type": "log", "message": f"🏁 [END] Simulation completed. Score: {score:.3f}"})
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        try:
+            await websocket.send_json({"type": "log", "message": f"❌ [ERROR] {str(e)}"})
+        except:
+            pass
+
 
 
 def main(host: str = "0.0.0.0", port: int = 8000):
