@@ -33,6 +33,21 @@ import os
 # Enable the Gradio web interface at /web
 os.environ.setdefault("ENABLE_WEB_INTERFACE", "true")
 
+# Point the web interface to our README for the sidebar (strip frontmatter)
+_readme_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "README.md")
+if os.path.exists(_readme_path):
+    _content = open(_readme_path, encoding="utf-8").read()
+    # Strip YAML frontmatter (--- ... ---) so it doesn't render as text
+    if _content.startswith("---"):
+        _end = _content.find("---", 3)
+        if _end != -1:
+            _content = _content[_end + 3:].lstrip("\n")
+    # Write stripped version to a temp location
+    _stripped_path = os.path.join(os.path.dirname(__file__), ".readme_web.md")
+    with open(_stripped_path, "w", encoding="utf-8") as _f:
+        _f.write(_content)
+    os.environ.setdefault("ENV_README_PATH", _stripped_path)
+
 try:
     from openenv.core.env_server.http_server import create_app
 except Exception as e:  # pragma: no cover

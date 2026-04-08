@@ -537,8 +537,8 @@ class DarkStoreEnvironment(Environment):
                 f"Valid types: {', '.join(sorted(self.VALID_ACTIONS))}"
             )
             self._advance_tick()
-            self._cumulative_reward += 0.0
-            return self._build_observation(reward=0.0, error=error)
+            self._cumulative_reward += -0.5
+            return self._build_observation(reward=-0.5, error=error)
 
         # --- Dispatch to action handlers ---
         if action_type == "move_picker":
@@ -555,6 +555,10 @@ class DarkStoreEnvironment(Environment):
             step_reward, error = self._handle_restock(action)
         elif action_type == "wait":
             step_reward, error = 0.0, None
+
+        # Penalize invalid/failed actions (except stockout which already has -5.0)
+        if error is not None and step_reward == 0.0:
+            step_reward = -0.5
 
         # --- Advance simulation ---
         tick_reward = self._advance_tick()
@@ -578,7 +582,7 @@ class DarkStoreEnvironment(Environment):
 
         target = (int(target_row), int(target_col))
         if self._picker_pos == target:
-            return 0.0, None  # already there, no cost
+            return 0.0, "Already at target — try pick or another action"
 
         if not _is_walkable(target[0], target[1]):
             return 0.0, (
@@ -621,6 +625,18 @@ class DarkStoreEnvironment(Environment):
         # Stockout check
         if shelf.stock <= 0:
             return -5.0, f"STOCKOUT: {item_name} has 0 stock"
+
+        # Check if any pending order actually needs this item
+        item_needed = False
+        for order in self._orders.values():
+            if order.status == "pending" and item_name in order.items:
+                needed = order.items.count(item_name)
+                have = order.picked_items.count(item_name)
+                if have < needed:
+                    item_needed = True
+                    break
+        if not item_needed:
+            return 0.0, f"No pending order needs {item_name} right now"
 
         # Success — pick the item
         shelf.stock -= 1
@@ -999,6 +1015,7 @@ class DarkStoreEnvironment(Environment):
                     rider_id=rider_id,
                 ))
 
+        self._last_error = error
         text = self._render_text()
 
         return DarkStoreObservation(
@@ -1051,6 +1068,73 @@ class DarkStoreEnvironment(Environment):
         return max(0.001, min(0.999, score))
 
     # ------------------------------------------------------------------
+    # Action hint for LLM
+    # ------------------------------------------------------------------
+
+    def _compute_action_hint(self) -> str:
+        """Compute a contextual hint about the current situation."""
+        # 1. Packed orders + idle rider
+        if self._packed_orders:
+            idle_riders = [r for r in self._riders.values() if r.status == "idle"]
+            if idle_riders:
+                return f"Order {self._packed_orders[0]} is packed and {idle_riders[0].rider_id} is idle — ready for dispatch"
+
+        # 2. Picker at (0,0) with all items for an order
+        if self._picker_pos == (0, 0):
+            for order in self._orders.values():
+                if order.status == "pending":
+                    picked_counts: Dict[str, int] = {}
+                    for pi in order.picked_items:
+                        picked_counts[pi] = picked_counts.get(pi, 0) + 1
+                    missing = [item for item in set(order.items)
+                               if picked_counts.get(item, 0) < order.items.count(item)]
+                    if not missing:
+                        return f"All items for {order.order_id} are picked and picker is at packing station"
+
+        # 3. All items picked → need to go to packing station
+        for order in self._orders.values():
+            if order.status == "pending":
+                picked_counts: Dict[str, int] = {}
+                for pi in order.picked_items:
+                    picked_counts[pi] = picked_counts.get(pi, 0) + 1
+                missing = [item for item in set(order.items)
+                           if picked_counts.get(item, 0) < order.items.count(item)]
+                if not missing and self._picker_pos != (0, 0):
+                    return f"All items for {order.order_id} picked — picker needs to reach packing station (0,0)"
+
+        # 4. Picker is at a shelf with a needed item
+        for order in self._orders.values():
+            if order.status != "pending":
+                continue
+            picked_counts: Dict[str, int] = {}
+            for pi in order.picked_items:
+                picked_counts[pi] = picked_counts.get(pi, 0) + 1
+            for item in order.items:
+                if picked_counts.get(item, 0) >= order.items.count(item):
+                    continue
+                for shelf in self._shelves:
+                    if (shelf.item_name == item
+                            and (shelf.row, shelf.col) == self._picker_pos
+                            and shelf.stock > 0):
+                        return f"Picker is at {item} shelf ({shelf.row},{shelf.col}) — item needed for {order.order_id}"
+
+        # 5. Need to pick items
+        for order in self._orders.values():
+            if order.status != "pending":
+                continue
+            picked_counts: Dict[str, int] = {}
+            for pi in order.picked_items:
+                picked_counts[pi] = picked_counts.get(pi, 0) + 1
+            for item in order.items:
+                if picked_counts.get(item, 0) >= order.items.count(item):
+                    continue
+                for shelf in self._shelves:
+                    if shelf.item_name == item and shelf.stock > 0:
+                        return f"Need {item} for {order.order_id} — available at shelf ({shelf.row},{shelf.col})"
+
+        return ""
+
+    # ------------------------------------------------------------------
     # Text rendering for LLM consumption
     # ------------------------------------------------------------------
 
@@ -1074,6 +1158,12 @@ class DarkStoreEnvironment(Environment):
             f"PICKER  position=({self._picker_pos[0]}, {self._picker_pos[1]})  "
             f"holding=[{holding_str}]"
         )
+
+        # Show hint only when agent made an error (to help it recover)
+        if getattr(self, '_last_error', None):
+            hint = self._compute_action_hint()
+            if hint:
+                lines.append(f"HINT: {hint}")
 
         # Pending orders
         pending = [

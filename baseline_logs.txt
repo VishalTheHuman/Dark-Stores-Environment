@@ -1,0 +1,165 @@
+[START] task=single_order env=dark_store model=moonshotai/kimi-k2-instruct
+[STEP] step=1 action=(move_picker,row=1,col=1) reward=-0.35 done=false error=null
+[STEP] step=2 action=(pick,row=1,col=1,item=milk) reward=0.00 done=false error=null
+[STEP] step=3 action=(move_picker,row=2,col=2) reward=-0.10 done=false error=null
+[STEP] step=4 action=(pick,row=2,col=2,item=chips) reward=0.00 done=false error=null
+[STEP] step=5 action=(pick,row=1,col=5,item=eggs) reward=-0.50 done=false error=Picker at (2, 2) but shelf is at (1, 5)
+[STEP] step=6 action=(move_picker,row=1,col=5) reward=-0.30 done=false error=null
+[STEP] step=7 action=(pick,row=1,col=5,item=eggs) reward=0.00 done=false error=null
+[STEP] step=8 action=(move_picker,row=0,col=0) reward=-0.30 done=false error=null
+[STEP] step=9 action=(pack,order=Order-1) reward=0.00 done=false error=null
+[STEP] step=10 action=(wait) reward=0.00 done=false error=null
+[STEP] step=11 action=(wait) reward=0.00 done=false error=null
+[STEP] step=12 action=(wait) reward=0.00 done=false error=null
+[STEP] step=13 action=(wait) reward=0.00 done=false error=null
+[STEP] step=14 action=(assign_rider,order=Order-1,rider=Rider-A) reward=0.00 done=false error=null
+[STEP] step=15 action=(wait) reward=0.00 done=false error=null
+[STEP] step=16 action=(wait) reward=0.00 done=false error=null
+[STEP] step=17 action=(wait) reward=10.00 done=true error=null
+[END] success=true steps=17 score=0.939 rewards=-0.35,0.00,-0.10,0.00,-0.50,-0.30,0.00,-0.30,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,10.00
+[START] task=concurrent_orders env=dark_store model=moonshotai/kimi-k2-instruct
+[STEP] step=1 action=(move_picker,row=1,col=1) reward=-0.35 done=false error=null
+[STEP] step=2 action=(pick,row=1,col=1,item=milk) reward=0.00 done=false error=null
+[STEP] step=3 action=(move_picker,row=2,col=1) reward=-0.05 done=false error=null
+[STEP] step=4 action=(pick,row=2,col=1,item=bread) reward=0.00 done=false error=null
+[STEP] step=5 action=(move_picker,row=1,col=2) reward=-0.10 done=false error=null
+[STEP] step=6 action=(move_picker,row=1,col=2) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=7 action=(pick,row=1,col=2,item=curd) reward=0.00 done=false error=null
+[STEP] step=8 action=(move_picker,row=2,col=2) reward=-0.05 done=false error=null
+[STEP] step=9 action=(move_picker,row=2,col=2) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=10 action=(move_picker,row=0,col=0) reward=-0.20 done=false error=null
+[STEP] step=11 action=(move_picker,row=1,col=5) reward=-0.30 done=false error=null
+[STEP] step=12 action=(move_picker,row=2,col=2) reward=-0.30 done=false error=null
+[STEP] step=13 action=(move_picker,row=0,col=0) reward=-0.20 done=false error=null
+[STEP] step=14 action=(move_picker,row=2,col=2) reward=-0.20 done=false error=null
+[STEP] step=15 action=(move_picker,row=1,col=5) reward=-0.30 done=false error=null
+[STEP] step=16 action=(move_picker,row=1,col=5) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=17 action=(move_picker,row=0,col=0) reward=-0.30 done=false error=null
+[STEP] step=18 action=(pack,order=Order-1) reward=0.00 done=false error=null
+[STEP] step=19 action=(move_picker,row=2,col=2) reward=-0.20 done=false error=null
+[STEP] step=20 action=(pick,row=2,col=2,item=chips) reward=0.00 done=false error=null
+[STEP] step=21 action=(move_picker,row=1,col=5) reward=-0.30 done=false error=null
+[STEP] step=22 action=(move_picker,row=1,col=5) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=23 action=(pick,row=1,col=5,item=eggs) reward=0.00 done=false error=null
+[STEP] step=24 action=(move_picker,row=3,col=1) reward=-0.40 done=false error=null
+[STEP] step=25 action=(move_picker,row=3,col=1) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=26 action=(pick,row=3,col=1,item=dal) reward=0.00 done=false error=null
+[STEP] step=27 action=(move_picker,row=2,col=7) reward=-0.55 done=false error=null
+[STEP] step=28 action=(move_picker,row=2,col=7) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=29 action=(pick,row=2,col=7,item=rice) reward=0.00 done=false error=null
+[STEP] step=30 action=(move_picker,row=1,col=7) reward=-0.05 done=false error=null
+[STEP] step=31 action=(move_picker,row=1,col=7) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=32 action=(pick,row=1,col=7,item=butter) reward=0.00 done=false error=null
+[STEP] step=33 action=(move_picker,row=3,col=2) reward=-0.45 done=false error=null
+[STEP] step=34 action=(move_picker,row=3,col=2) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=35 action=(pick,row=3,col=2,item=oil) reward=-0.50 done=false error=Picker already holding 5 items
+[STEP] step=36 action=(assign_rider,order=Order-1,rider=Rider-A) reward=0.00 done=false error=null
+[STEP] step=37 action=(move_picker,row=2,col=4) reward=-0.35 done=false error=null
+[STEP] step=38 action=(move_picker,row=0,col=0) reward=-0.30 done=false error=null
+[STEP] step=39 action=(move_picker,row=2,col=4) reward=9.70 done=false error=null
+[STEP] step=40 action=(move_picker,row=0,col=0) reward=-0.30 done=false error=null
+[STEP] step=41 action=(move_picker,row=2,col=4) reward=-0.30 done=false error=null
+[STEP] step=42 action=(move_picker,row=3,col=2) reward=-0.35 done=false error=null
+[STEP] step=43 action=(move_picker,row=3,col=2) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=44 action=(move_picker,row=0,col=0) reward=-0.25 done=false error=null
+[STEP] step=45 action=(move_picker,row=3,col=2) reward=-0.25 done=false error=null
+[STEP] step=46 action=(move_picker,row=0,col=0) reward=-0.25 done=false error=null
+[STEP] step=47 action=(move_picker,row=3,col=2) reward=-0.25 done=false error=null
+[STEP] step=48 action=(move_picker,row=0,col=0) reward=-0.25 done=false error=null
+[STEP] step=49 action=(move_picker,row=2,col=4) reward=-0.30 done=false error=null
+[STEP] step=50 action=(move_picker,row=0,col=0) reward=-138.30 done=false error=null
+[STEP] step=51 action=(restock,item=oil,qty=8) reward=-1.00 done=false error=null
+[STEP] step=52 action=(pack,order=Order-2) reward=0.00 done=false error=null
+[STEP] step=53 action=(restock,item=oil,qty=8) reward=-1.00 done=false error=null
+[STEP] step=54 action=(move_picker,row=3,col=2) reward=-0.25 done=false error=null
+[STEP] step=55 action=(pick,row=3,col=2,item=oil) reward=0.00 done=false error=null
+[STEP] step=56 action=(move_picker,row=2,col=5) reward=-0.40 done=false error=null
+[STEP] step=57 action=(move_picker,row=2,col=5) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=58 action=(pick,row=2,col=5,item=biscuits) reward=0.00 done=false error=null
+[STEP] step=59 action=(move_picker,row=2,col=4) reward=-0.05 done=false error=null
+[STEP] step=60 action=(pick,row=2,col=4,item=coke) reward=-60.50 done=true error=Picker already holding 5 items
+[END] success=false steps=60 score=0.001 rewards=-0.35,0.00,-0.05,0.00,-0.10,-0.50,0.00,-0.05,-0.50,-0.20,-0.30,-0.30,-0.20,-0.20,-0.30,-0.50,-0.30,0.00,-0.20,0.00,-0.30,-0.50,0.00,-0.40,-0.50,0.00,-0.55,-0.50,0.00,-0.05,-0.50,0.00,-0.45,-0.50,-0.50,0.00,-0.35,-0.30,9.70,-0.30,-0.30,-0.35,-0.50,-0.25,-0.25,-0.25,-0.25,-0.25,-0.30,-138.30,-1.00,0.00,-1.00,-0.25,0.00,-0.40,-0.50,0.00,-0.05,-60.50
+[START] task=full_operations env=dark_store model=moonshotai/kimi-k2-instruct
+[STEP] step=1 action=(move_picker,row=1,col=1) reward=-0.35 done=false error=null
+[STEP] step=2 action=(pick,row=1,col=1,item=milk) reward=0.00 done=false error=null
+[STEP] step=3 action=(move_picker,row=2,col=1) reward=-18.05 done=false error=null
+[STEP] step=4 action=(restock,item=bread,qty=8) reward=-1.00 done=false error=null
+[STEP] step=5 action=(restock,item=bread,qty=8) reward=-1.00 done=false error=null
+[STEP] step=6 action=(restock,item=bread,qty=8) reward=-1.00 done=false error=null
+[STEP] step=7 action=(restock,item=bread,qty=8) reward=-1.00 done=false error=null
+[STEP] step=8 action=(restock,item=bread,qty=8) reward=-1.00 done=false error=null
+[STEP] step=9 action=(pick,row=2,col=1,item=bread) reward=0.00 done=false error=null
+[STEP] step=10 action=(move_picker,row=1,col=5) reward=-0.35 done=false error=null
+[STEP] step=11 action=(pick,row=1,col=5,item=eggs) reward=0.00 done=false error=null
+[STEP] step=12 action=(move_picker,row=2,col=2) reward=-0.30 done=false error=null
+[STEP] step=13 action=(move_picker,row=2,col=2) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=14 action=(move_picker,row=0,col=0) reward=-0.20 done=false error=null
+[STEP] step=15 action=(move_picker,row=2,col=2) reward=-0.20 done=false error=null
+[STEP] step=16 action=(move_picker,row=0,col=0) reward=-0.20 done=false error=null
+[STEP] step=17 action=(move_picker,row=2,col=2) reward=-0.20 done=false error=null
+[STEP] step=18 action=(move_picker,row=2,col=2) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=19 action=(move_picker,row=0,col=0) reward=-0.20 done=false error=null
+[STEP] step=20 action=(pack,order=Order-1) reward=0.00 done=false error=null
+[STEP] step=21 action=(restock,item=juice,qty=8) reward=-1.00 done=false error=null
+[STEP] step=22 action=(restock,item=juice,qty=8) reward=-1.00 done=false error=null
+[STEP] step=23 action=(restock,item=juice,qty=8) reward=-1.00 done=false error=null
+[STEP] step=24 action=(restock,item=juice,qty=8) reward=-1.00 done=false error=null
+[STEP] step=25 action=(restock,item=juice,qty=8) reward=-1.00 done=false error=null
+[STEP] step=26 action=(restock,item=coke,qty=8) reward=-1.00 done=false error=null
+[STEP] step=27 action=(restock,item=coke,qty=8) reward=-1.00 done=false error=null
+[STEP] step=28 action=(restock,item=coke,qty=8) reward=-1.00 done=false error=null
+[STEP] step=29 action=(restock,item=coke,qty=8) reward=-1.00 done=false error=null
+[STEP] step=30 action=(restock,item=coke,qty=8) reward=-1.00 done=false error=null
+[STEP] step=31 action=(move_picker,row=2,col=2) reward=-0.20 done=false error=null
+[STEP] step=32 action=(pick,row=2,col=2,item=chips) reward=0.00 done=false error=null
+[STEP] step=33 action=(move_picker,row=1,col=2) reward=-0.05 done=false error=null
+[STEP] step=34 action=(move_picker,row=1,col=2) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=35 action=(pick,row=1,col=2,item=curd) reward=0.00 done=false error=null
+[STEP] step=36 action=(move_picker,row=0,col=0) reward=-0.15 done=false error=null
+[STEP] step=37 action=(pack,order=Order-2) reward=0.00 done=false error=null
+[STEP] step=38 action=(move_picker,row=2,col=7) reward=-0.45 done=false error=null
+[STEP] step=39 action=(move_picker,row=2,col=7) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=40 action=(pick,row=2,col=7,item=rice) reward=0.00 done=false error=null
+[STEP] step=41 action=(move_picker,row=3,col=1) reward=-0.55 done=false error=null
+[STEP] step=42 action=(pick,row=3,col=1,item=dal) reward=0.00 done=false error=null
+[STEP] step=43 action=(move_picker,row=1,col=7) reward=-0.50 done=false error=null
+[STEP] step=44 action=(move_picker,row=1,col=7) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=45 action=(pick,row=1,col=7,item=butter) reward=0.00 done=false error=null
+[STEP] step=46 action=(pick,row=1,col=7,item=oil) reward=-0.50 done=false error=No shelf for 'oil' at (1, 7)
+[STEP] step=47 action=(move_picker,row=3,col=2) reward=-0.45 done=false error=null
+[STEP] step=48 action=(move_picker,row=3,col=2) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=49 action=(pick,row=3,col=2,item=oil) reward=0.00 done=false error=null
+[STEP] step=50 action=(move_picker,row=0,col=0) reward=-315.25 done=false error=null
+[STEP] step=51 action=(pack,order=Order-3) reward=0.00 done=false error=null
+[STEP] step=52 action=(restock,item=milk,qty=8) reward=-1.00 done=false error=null
+[STEP] step=53 action=(restock,item=milk,qty=8) reward=-1.00 done=false error=null
+[STEP] step=54 action=(restock,item=milk,qty=8) reward=-1.00 done=false error=null
+[STEP] step=55 action=(restock,item=milk,qty=8) reward=-1.00 done=false error=null
+[STEP] step=56 action=(restock,item=milk,qty=8) reward=-1.00 done=false error=null
+[STEP] step=57 action=(restock,item=juice,qty=8) reward=-1.00 done=false error=null
+[STEP] step=58 action=(restock,item=curd,qty=8) reward=-1.00 done=false error=null
+[STEP] step=59 action=(pack,order=Order-4) reward=0.00 done=false error=null
+[STEP] step=60 action=(restock,item=curd,qty=8) reward=-1.00 done=false error=null
+[STEP] step=61 action=(restock,item=juice,qty=8) reward=-1.00 done=false error=null
+[STEP] step=62 action=(restock,item=curd,qty=8) reward=-1.00 done=false error=null
+[STEP] step=63 action=(restock,item=eggs,qty=8) reward=-1.00 done=false error=null
+[STEP] step=64 action=(restock,item=eggs,qty=8) reward=-1.00 done=false error=null
+[STEP] step=65 action=(restock,item=eggs,qty=8) reward=-1.00 done=false error=null
+[STEP] step=66 action=(restock,item=eggs,qty=8) reward=-1.00 done=false error=null
+[STEP] step=67 action=(restock,item=eggs,qty=8) reward=-1.00 done=false error=null
+[STEP] step=68 action=(move_picker,row=1,col=1) reward=-0.10 done=false error=null
+[STEP] step=69 action=(restock,item=butter,qty=8) reward=-1.00 done=false error=null
+[STEP] step=70 action=(restock,item=butter,qty=8) reward=-1.00 done=false error=null
+[STEP] step=71 action=(pick,row=1,col=1,item=milk) reward=0.00 done=false error=null
+[STEP] step=72 action=(restock,item=butter,qty=8) reward=-1.00 done=false error=null
+[STEP] step=73 action=(move_picker,row=2,col=5) reward=-0.35 done=false error=null
+[STEP] step=74 action=(move_picker,row=2,col=5) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=75 action=(pick,row=2,col=5,item=biscuits) reward=0.00 done=false error=null
+[STEP] step=76 action=(move_picker,row=2,col=4) reward=-0.05 done=false error=null
+[STEP] step=77 action=(pick,row=2,col=4,item=coke) reward=0.00 done=false error=null
+[STEP] step=78 action=(move_picker,row=1,col=4) reward=-0.05 done=false error=null
+[STEP] step=79 action=(move_picker,row=1,col=4) reward=-0.50 done=false error=Already at target — try pick or another action
+[STEP] step=80 action=(pick,row=1,col=4,item=juice) reward=-150.00 done=true error=null
+[END] success=false steps=80 score=0.001 rewards=-0.35,0.00,-18.05,-1.00,-1.00,-1.00,-1.00,-1.00,0.00,-0.35,0.00,-0.30,-0.50,-0.20,-0.20,-0.20,-0.20,-0.50,-0.20,0.00,-1.00,-1.00,-1.00,-1.00,-1.00,-1.00,-1.00,-1.00,-1.00,-1.00,-0.20,0.00,-0.05,-0.50,0.00,-0.15,0.00,-0.45,-0.50,0.00,-0.55,0.00,-0.50,-0.50,0.00,-0.50,-0.45,-0.50,0.00,-315.25,0.00,-1.00,-1.00,-1.00,-1.00,-1.00,-1.00,-1.00,0.00,-1.00,-1.00,-1.00,-1.00,-1.00,-1.00,-1.00,-1.00,-0.10,-1.00,-1.00,0.00,-1.00,-0.35,-0.50,0.00,-0.05,0.00,-0.05,-0.50,-150.00
+
+[SUMMARY] avg_score=0.314 scores=0.939,0.001,0.001

@@ -6,7 +6,7 @@ using an OpenAI-compatible LLM to generate actions from observation text.
 
 Environment variables:
     API_BASE_URL   - LLM API endpoint (default: https://router.huggingface.co/v1)
-    MODEL_NAME     - Model identifier (default: Qwen/Qwen2.5-0.5B-Instruct)
+    MODEL_NAME     - Model identifier (default: Qwen/Qwen2.5-72B-Instruct)
     HF_TOKEN       - API key for authentication
 
 STDOUT format:
@@ -46,49 +46,33 @@ MAX_TOKENS = 300
 # ---------------------------------------------------------------------------
 
 SYSTEM_PROMPT = textwrap.dedent("""\
-You are an AI agent managing a quick-commerce dark store. You coordinate a picker robot, \
-packing station, and delivery riders to fulfil grocery orders under tight time constraints.
+You are a warehouse robot controller. Reply with ONLY one JSON object per turn. No text.
 
-WAREHOUSE: 10x8 grid with shelves at fixed positions. Packing station at (0,0). Picker starts at (0,7).
-CITY: 8x8 delivery grid. Riders start at (0,0) and return there after each delivery.
+STEP-BY-STEP PROCESS for each order:
+1. Look at PENDING ORDERS to see what items are needed (items WITHOUT a checkmark ✓)
+2. Look at SHELVES to find the (row,col) of the needed item
+3. Use move_picker to go to that shelf: {"action": "move_picker", "row": R, "col": C}
+4. Use pick to grab the item: {"action": "pick", "row": R, "col": C, "item_name": "NAME"}
+5. Repeat steps 2-4 for each unpicked item in the order
+6. Move to packing station: {"action": "move_picker", "row": 0, "col": 0}
+7. Pack the order: {"action": "pack", "order_id": "ORDER_ID"}
+8. Wait one tick for packing: {"action": "wait"}
+9. Assign a rider: {"action": "assign_rider", "order_id": "ORDER_ID", "rider_id": "RIDER_ID"}
+10. Start next order or wait
 
-ACTION SPACE — reply with exactly ONE JSON object (no markdown, no explanation):
+CRITICAL RULES:
+- You can hold MAX 5 items. Only pick items that orders actually need.
+- pick ONLY works when your position EXACTLY matches the shelf position
+- pack ONLY works at position (0,0) when ALL items have ✓ checkmarks
+- assign_rider ONLY works when order status is PACKED (wait 2 ticks after pack)
+- If you get an error, READ THE HINT and follow it
+- If STOCKOUT appears, use: {"action": "restock", "item_name": "NAME", "quantity": 8}
 
-1. move_picker: Move picker one cell/tick toward target.
-   {"action": "move_picker", "row": <int>, "col": <int>}
+BATCH DELIVERY (bonus +2.0 per order):
+When 2 orders are PACKED and customers are nearby:
+{"action": "batch_delivery", "order_a": "ID1", "order_b": "ID2", "rider_id": "RIDER_ID"}
 
-2. pick: Pick an item from a shelf. Picker must be AT the shelf cell. Max 5 items held.
-   {"action": "pick", "row": <int>, "col": <int>, "item_name": "<str>"}
-
-3. pack: Pack a completed order at packing station (0,0). Takes 2 ticks. All items must be picked.
-   {"action": "pack", "order_id": "<str>"}
-
-4. assign_rider: Dispatch an idle rider to deliver a packed order.
-   {"action": "assign_rider", "order_id": "<str>", "rider_id": "<str>"}
-
-5. batch_delivery: Send one idle rider to deliver TWO packed orders (nearer customer first). +2.0 bonus.
-   {"action": "batch_delivery", "order_a": "<str>", "order_b": "<str>", "rider_id": "<str>"}
-
-6. restock: Emergency restock a depleted SKU. Arrives in 4 ticks. Costs -1.0.
-   {"action": "restock", "item_name": "<str>", "quantity": <int>}
-
-7. wait: Do nothing this tick.
-   {"action": "wait"}
-
-REWARDS:
-  On-time delivery: +10.0 | Late delivery: -15.0 | Stockout pick: -5.0
-  Picker move/tick: -0.05 | Batch bonus: +2.0 | Restock: -1.0 | Expiry: -3.0/unit
-
-STRATEGY HINTS:
-- Prioritize URGENT orders (timer < 5 ticks) — late delivery costs -15.0.
-- Batch nearby deliveries when two packed orders have close customer positions.
-- Restock depleted items (STOCKOUT) early so they arrive in time.
-- Pick items for multiple orders in one trip when shelves are close together.
-- Move picker efficiently — each move costs -0.05.
-- Pack as soon as all items for an order are picked and picker is at (0,0).
-- Assign riders immediately after packing to avoid timer expiry during transit.
-
-RESPOND WITH ONLY A SINGLE JSON OBJECT. No text before or after.\
+Reply with ONLY the JSON. Nothing else.\
 """)
 
 
@@ -134,7 +118,6 @@ def parse_action_from_response(text: str) -> DarkStoreAction:
     # Strip markdown code fences if present
     if text.startswith("```"):
         lines = text.split("\n")
-        # Remove first and last lines (fences)
         lines = [l for l in lines if not l.strip().startswith("```")]
         text = "\n".join(lines).strip()
 
