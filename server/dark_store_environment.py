@@ -150,64 +150,64 @@ def _build_task_registry() -> Dict[str, TaskConfig]:
     single_order = TaskConfig(
         name="single_order",
         seed=42,
-        tick_budget=20,
+        tick_budget=40,
         order_schedule=[
             (0, [
                 OrderSpec(
                     order_id="Order-1",
                     items=["milk", "chips", "eggs"],
                     customer_pos=(3, 1),
-                    timer_ticks=20,
+                    timer_ticks=40,
                 ),
             ]),
         ],
         rider_specs=[
             RiderSpec(rider_id="Rider-A", position=(0, 0), status="idle"),
         ],
-        # Max: +10.0 (on-time) - ~0.70 movement ~ 9.30
-        max_theoretical_reward=9.30,
+        # Max: +10.0 (on-time) - ~1.0 movement ~ 9.0
+        max_theoretical_reward=9.0,
     )
 
     # --- Task 2: concurrent_orders (medium) ---
     concurrent_orders = TaskConfig(
         name="concurrent_orders",
         seed=123,
-        tick_budget=30,
+        tick_budget=60,
         order_schedule=[
             (0, [
                 OrderSpec(
                     order_id="Order-1",
                     items=["milk", "bread", "curd"],
                     customer_pos=(3, 1),
-                    timer_ticks=20,
+                    timer_ticks=40,
                 ),
                 OrderSpec(
                     order_id="Order-2",
                     items=["chips", "eggs"],
                     customer_pos=(4, 2),
-                    timer_ticks=20,
+                    timer_ticks=40,
                 ),
             ]),
-            (4, [
+            (8, [
                 OrderSpec(
                     order_id="Order-3",
                     items=["rice", "dal"],
                     customer_pos=(6, 5),
-                    timer_ticks=20,
+                    timer_ticks=40,
                 ),
             ]),
-            (10, [
+            (20, [
                 OrderSpec(
                     order_id="Order-4",
                     items=["butter", "oil"],
                     customer_pos=(1, 6),
-                    timer_ticks=20,
+                    timer_ticks=40,
                 ),
                 OrderSpec(
                     order_id="Order-5",
                     items=["biscuits", "coke"],
                     customer_pos=(2, 7),
-                    timer_ticks=20,
+                    timer_ticks=40,
                 ),
             ]),
         ],
@@ -216,51 +216,51 @@ def _build_task_registry() -> Dict[str, TaskConfig]:
             RiderSpec(rider_id="Rider-B", position=(0, 0), status="idle"),
             RiderSpec(rider_id="Rider-C", position=(0, 0), status="idle"),
         ],
-        # Max: 5x10.0 + 2x2.0 - movement ~ 52.0
-        max_theoretical_reward=52.0,
+        # Max: 5x10.0 + 2x2.0 - movement ~ 50.0
+        max_theoretical_reward=50.0,
     )
 
     # --- Task 3: full_operations (hard) ---
     full_operations = TaskConfig(
         name="full_operations",
         seed=456,
-        tick_budget=40,
+        tick_budget=80,
         order_schedule=[
             (0, [
                 OrderSpec(order_id="Order-1", items=["milk", "bread", "eggs"],
-                          customer_pos=(3, 1), timer_ticks=20),
+                          customer_pos=(3, 1), timer_ticks=40),
                 OrderSpec(order_id="Order-2", items=["chips", "curd"],
-                          customer_pos=(4, 2), timer_ticks=20),
+                          customer_pos=(4, 2), timer_ticks=40),
             ]),
-            (2, [
+            (5, [
                 OrderSpec(order_id="Order-3", items=["rice", "dal"],
-                          customer_pos=(2, 3), timer_ticks=20),
+                          customer_pos=(2, 3), timer_ticks=40),
             ]),
-            (4, [
+            (10, [
                 OrderSpec(order_id="Order-4", items=["butter", "oil"],
-                          customer_pos=(1, 6), timer_ticks=20),
+                          customer_pos=(1, 6), timer_ticks=40),
             ]),
-            (6, [
+            (15, [
                 OrderSpec(order_id="Order-5", items=["biscuits", "coke"],
-                          customer_pos=(2, 7), timer_ticks=20),
-            ]),
-            (8, [
-                OrderSpec(order_id="Order-6", items=["juice", "milk"],
-                          customer_pos=(5, 3), timer_ticks=20),
-            ]),
-            (12, [
-                OrderSpec(order_id="Order-7", items=["bread", "eggs", "curd"],
-                          customer_pos=(6, 5), timer_ticks=20),
-            ]),
-            (16, [
-                OrderSpec(order_id="Order-8", items=["chips", "dal"],
-                          customer_pos=(3, 6), timer_ticks=20),
+                          customer_pos=(2, 7), timer_ticks=40),
             ]),
             (20, [
-                OrderSpec(order_id="Order-9", items=["rice", "butter"],
-                          customer_pos=(7, 2), timer_ticks=20),
+                OrderSpec(order_id="Order-6", items=["juice", "milk"],
+                          customer_pos=(5, 3), timer_ticks=40),
             ]),
-            (25, [
+            (30, [
+                OrderSpec(order_id="Order-7", items=["bread", "eggs", "curd"],
+                          customer_pos=(6, 5), timer_ticks=40),
+            ]),
+            (40, [
+                OrderSpec(order_id="Order-8", items=["chips", "dal"],
+                          customer_pos=(3, 6), timer_ticks=40),
+            ]),
+            (50, [
+                OrderSpec(order_id="Order-9", items=["rice", "butter"],
+                          customer_pos=(7, 2), timer_ticks=30),
+            ]),
+            (60, [
                 OrderSpec(order_id="Order-10", items=["oil", "biscuits"],
                           customer_pos=(4, 7), timer_ticks=20),
             ]),
@@ -273,8 +273,8 @@ def _build_task_registry() -> Dict[str, TaskConfig]:
         ],
         stock_overrides={"coke": 0, "juice": 0},
         expiry_overrides={"bread": 3},
-        # Max: 10x10.0 + 3x2.0 - movement - restock ~ 100.0
-        max_theoretical_reward=100.0,
+        # Max: 10x10.0 + 3x2.0 - movement - restock ~ 95.0
+        max_theoretical_reward=95.0,
     )
 
     return {
@@ -311,6 +311,57 @@ def _move_one_step(
     elif c > tc:
         return (r, c - 1)
     return current  # already at target
+
+
+def _is_walkable(row: int, col: int) -> bool:
+    """Check if a cell is walkable in the dark store grid (10 cols x 8 rows).
+
+    Walkable cells:
+    - Walkway columns: col 0 and col 9 (full-length corridors)
+    - Top corridor: row 0 (all columns)
+    - Bottom corridor: row 7 (all columns)
+    - Shelf cells: any cell that has a shelf (picker can stand there to pick)
+    """
+    if row < 0 or row > 7 or col < 0 or col > 9:
+        return False
+    # Walkway columns
+    if col == 0 or col == 9:
+        return True
+    # Top and bottom corridors
+    if row == 0 or row == 7:
+        return True
+    # Shelf cells are walkable (picker goes there to pick items)
+    shelf_positions = {(s["row"], s["col"]) for s in SHELF_LAYOUT}
+    if (row, col) in shelf_positions:
+        return True
+    return False
+
+
+def _bfs_path_cost(start: Tuple[int, int], end: Tuple[int, int]) -> int:
+    """BFS shortest path cost through walkable cells in the dark store.
+
+    Returns the number of steps in the shortest path, or Manhattan distance
+    as fallback if no path found (shouldn't happen with proper grid).
+    """
+    if start == end:
+        return 0
+
+    from collections import deque
+    visited = {start}
+    queue = deque([(start, 0)])
+
+    while queue:
+        (r, c), dist = queue.popleft()
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = r + dr, c + dc
+            if (nr, nc) == end:
+                return dist + 1
+            if (nr, nc) not in visited and _is_walkable(nr, nc):
+                visited.add((nr, nc))
+                queue.append(((nr, nc), dist + 1))
+
+    # Fallback — should not happen if grid is connected
+    return _manhattan(start, end)
 
 
 # ---------------------------------------------------------------------------
@@ -519,7 +570,7 @@ class DarkStoreEnvironment(Environment):
     def _handle_move_picker(
         self, action: DarkStoreAction
     ) -> Tuple[float, Optional[str]]:
-        """Move picker one cell toward target."""
+        """Move picker to target via walkable path. Costs -0.05 per BFS step."""
         target_row = action.row
         target_col = action.col
         if target_row is None or target_col is None:
@@ -529,9 +580,15 @@ class DarkStoreEnvironment(Environment):
         if self._picker_pos == target:
             return 0.0, None  # already there, no cost
 
-        new_pos = _move_one_step(self._picker_pos, target)
-        self._picker_pos = new_pos
-        return -0.05, None
+        if not _is_walkable(target[0], target[1]):
+            return 0.0, (
+                f"Target ({target[0]},{target[1]}) is not walkable. "
+                f"Picker can move to: walkways (col 0,9), corridors (row 0,7), or shelf cells."
+            )
+
+        path_cost = _bfs_path_cost(self._picker_pos, target)
+        self._picker_pos = target
+        return -0.05 * path_cost, None
 
     def _handle_pick(
         self, action: DarkStoreAction
@@ -830,6 +887,15 @@ class DarkStoreEnvironment(Environment):
         # 7. Check episode termination
         if self._tick >= cfg.tick_budget:
             self._done = True
+            # Penalize undelivered orders at episode end
+            for order in self._orders.values():
+                if order.status not in ("delivered",):
+                    tick_reward += -15.0
+                    self._completed.append(CompletedDeliveryInfo(
+                        order_id=order.order_id,
+                        on_time=False,
+                    ))
+                    order.status = "delivered"
         elif self._all_orders_delivered():
             self._done = True
 
@@ -974,14 +1040,15 @@ class DarkStoreEnvironment(Environment):
     # ------------------------------------------------------------------
 
     def compute_score(self) -> float:
-        """Compute normalized score in [0.0, 1.0]."""
+        """Compute normalized score in (0.0, 1.0) — strictly between 0 and 1."""
         if self._task_config is None:
-            return 0.0
+            return 0.001
         max_reward = self._task_config.max_theoretical_reward
         if max_reward <= 0:
-            return 0.0
+            return 0.001
         score = self._cumulative_reward / max_reward
-        return max(0.0, min(1.0, score))
+        # Clamp to open interval (0, 1) — competition requires strictly between 0 and 1
+        return max(0.001, min(0.999, score))
 
     # ------------------------------------------------------------------
     # Text rendering for LLM consumption

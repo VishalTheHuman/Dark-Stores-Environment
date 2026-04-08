@@ -252,8 +252,9 @@ async def run_task(
                 break
 
         score = env.compute_score()
-        score = max(0.0, min(1.0, score))
-        success = score > 0.0
+        # Clamp to open interval (0, 1) — competition requires strictly between 0 and 1
+        score = max(0.001, min(0.999, score))
+        success = score > 0.001
 
     except Exception as exc:
         print(f"[DEBUG] Task {task_name} error: {exc}", flush=True)
