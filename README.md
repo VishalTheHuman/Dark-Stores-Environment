@@ -298,36 +298,41 @@ The full challenge. The agent must:
 
 ## 💰 Reward Function
 
-The reward is **dense** — the agent receives signal on every tick where a meaningful event occurs, not just at episode end. This is critical: a sparse reward would make the learning signal too thin.
+The reward is **dense and continuous** — the agent receives meaningful signal on every tick, not just at episode end. Rewards are shaped to guide productive behavior.
 
 ```
-Event                      Reward     Why
-─────────────────────────  ─────────  ──────────────────────────
-✅ On-time delivery         +10.0     The whole point of the business
-❌ Late delivery            -15.0     Costs MORE than on-time earns
-❌ Undelivered at end       -15.0     Can't just ignore orders
-🏍️🏍️ Batch bonus            +2.0      Rewards smart dispatch
-🚶 Picker movement         -0.05/cell Efficiency tiebreaker (not dominant)
-⚠️ Stockout pick           -5.0      Should have restocked earlier
-📥 Restock fee             -1.0      Small price vs -5.0 stockout
-🧊 Item expiry             -3.0/unit  Use perishables first (FIFO)
+Event                      Reward          Details
+─────────────────────────  ──────────────  ──────────────────────────
+✅ On-time delivery         +10 to +15     Scales with time remaining
+                                           (+0.25 per tick left, max +5 bonus)
+📦 Order packed             +3.0           All items picked, packing started
+🏍️ Rider dispatched         +2.0           Packed order sent for delivery
+✋ Item picked              +1.0           Each successful pick from shelf
+🚶 Productive move          -0.025/cell    Moving toward needed shelf (half cost)
+🚶 Wasteful move            -0.10/cell     Moving away from targets (double cost)
+🏍️🏍️ Batch delivery bonus    +2.0/order     Two orders, one rider trip
+❌ Late/undelivered         -5.0           Per order at episode end
+⚠️ Stockout pick            -5.0           Trying to pick from empty shelf
+📥 Restock fee              -1.0           Emergency inventory refill
+🧊 Item expiry              -3.0/unit      Perishable items lost on shelf
+❌ Invalid action           -0.1           Wrong action type or parameters
 ```
 
-### 🧮 Why This Balance Works
+### 🧮 Reward Design Philosophy
 
-The **on-time delivery (+10)** is the dominant signal. Every other component is calibrated relative to it:
+The reward function is **shaped, not sparse**:
 
-- A late delivery (-15) costs more than an on-time delivery earns — the agent can't compensate for lateness by being efficient elsewhere
-- The picker efficiency cost (-0.05/step) is intentionally small: taking 5 extra steps costs -0.25, trivial compared to delivery reward. Path efficiency is a tiebreaker, not the primary objective
-- **Restock economics**: stockout costs -5.0, restock costs -1.0 plus 4 ticks delay. An agent that restocks proactively pays only -1.0. An agent that restocks reactively pays -5.0 for the stockout plus the delivery may be late (-15.0). The math strongly favours proactive behaviour
-- **Expiry economics**: 6 units of bread expiring = -18.0. Picking 1 extra bread unit to hold = -0.05 movement. The agent should always prioritize expiring items
+- **Movement is always negative** but productive moves cost half — the agent learns efficient routing without being punished for necessary travel
+- **Delivery reward scales with time** — delivering with 20 ticks left earns +15.0, delivering with 1 tick left earns +10.25. This incentivizes speed, not just completion
+- **Progress milestones** (+1 pick, +3 pack, +2 dispatch) give the agent positive feedback throughout the episode, not just at delivery
+- **Penalties are proportional** — a small mistake (-0.1) is recoverable, but stockouts (-5.0) and late deliveries (-5.0) are significant
 
 **Score** = `max(0.001, min(0.999, cumulative / max_theoretical))`
 
 ### 🏆 Max Theoretical Rewards
-- 🟢 `single_order`: ~9.0
-- 🟡 `concurrent_orders`: ~50.0
-- 🔴 `full_operations`: ~95.0
+- 🟢 `single_order`: ~24.0 (3 picks + pack + dispatch + on-time delivery with bonus)
+- 🟡 `concurrent_orders`: ~115.0 (13 picks + 5 packs + 5 dispatches + 5 deliveries + batch bonuses)
+- 🔴 `full_operations`: ~214.0 (25 picks + 10 packs + 10 dispatches + 10 deliveries + batch - restock)
 
 ---
 
@@ -532,8 +537,9 @@ Scores depend on the LLM model. Larger models handle the multi-step coordination
 | Agent | single_order | concurrent_orders | full_operations | avg |
 |---|---|---|---|---|
 | 🤷 Do-nothing | 0.001 | 0.001 | 0.001 | 0.001 |
-| 🏍️ Kimi-K2-Instruct (Groq) | 0.939 | 0.001 | 0.001 | 0.314 |
-| 🤖 Optimal (hand-coded) | 0.999 | — | — | — |
+| 🤖 Gemma2-27B (Ollama local) | 0.936 | 0.912 | 0.001 | 0.617 |
+
+Task 3 scored 0.001 because the model wasted ticks restocking items repeatedly instead of picking — demonstrating that the hard task genuinely challenges even capable models. A smarter agent that restocks once and moves on would score significantly higher.
 
 The difficulty progression is clear: Task 1 is solvable by most models, Task 2 requires multi-order coordination that challenges mid-tier models, and Task 3 with stockouts/expiry/batching genuinely challenges frontier models.
 

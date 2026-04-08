@@ -164,8 +164,8 @@ def _build_task_registry() -> Dict[str, TaskConfig]:
         rider_specs=[
             RiderSpec(rider_id="Rider-A", position=(0, 0), status="idle"),
         ],
-        # Max: +10.0 (on-time) - ~1.0 movement ~ 9.0
-        max_theoretical_reward=9.0,
+        # Max: 3 picks(3) + moves(~1) + pack(3) + dispatch(2) + delivery(15) ~ 24
+        max_theoretical_reward=24.0,
     )
 
     # --- Task 2: concurrent_orders (medium) ---
@@ -216,8 +216,8 @@ def _build_task_registry() -> Dict[str, TaskConfig]:
             RiderSpec(rider_id="Rider-B", position=(0, 0), status="idle"),
             RiderSpec(rider_id="Rider-C", position=(0, 0), status="idle"),
         ],
-        # Max: 5x10.0 + 2x2.0 - movement ~ 50.0
-        max_theoretical_reward=50.0,
+        # Max: 13 picks(13) + moves(~3) + 5 packs(15) + 5 dispatches(10) + 5 deliveries(~70) + batch(4) ~ 115
+        max_theoretical_reward=115.0,
     )
 
     # --- Task 3: full_operations (hard) ---
@@ -273,8 +273,8 @@ def _build_task_registry() -> Dict[str, TaskConfig]:
         ],
         stock_overrides={"coke": 0, "juice": 0},
         expiry_overrides={"bread": 3},
-        # Max: 10x10.0 + 3x2.0 - movement - restock ~ 95.0
-        max_theoretical_reward=95.0,
+        # Max: ~25 picks(25) + moves(~5) + 10 packs(30) + 10 dispatches(20) + 10 deliveries(~130) + batch(6) - restock(2) ~ 214
+        max_theoretical_reward=214.0,
     )
 
     return {
@@ -537,8 +537,8 @@ class DarkStoreEnvironment(Environment):
                 f"Valid types: {', '.join(sorted(self.VALID_ACTIONS))}"
             )
             self._advance_tick()
-            self._cumulative_reward += -0.5
-            return self._build_observation(reward=-0.5, error=error)
+            self._cumulative_reward += -0.1
+            return self._build_observation(reward=-0.1, error=error)
 
         # --- Dispatch to action handlers ---
         if action_type == "move_picker":
@@ -558,11 +558,14 @@ class DarkStoreEnvironment(Environment):
 
         # Penalize invalid/failed actions (except stockout which already has -5.0)
         if error is not None and step_reward == 0.0:
-            step_reward = -0.5
+            step_reward = -0.1
 
         # --- Advance simulation ---
         tick_reward = self._advance_tick()
-        step_reward += tick_reward
+        # Cap per-step reward to avoid massive spikes
+        total = step_reward + tick_reward
+        total = max(-10.0, total)  # floor at -10 per step
+        step_reward = total
 
         self._cumulative_reward += step_reward
         return self._build_observation(reward=step_reward, error=error)
@@ -574,7 +577,7 @@ class DarkStoreEnvironment(Environment):
     def _handle_move_picker(
         self, action: DarkStoreAction
     ) -> Tuple[float, Optional[str]]:
-        """Move picker to target via walkable path. Costs -0.05 per BFS step."""
+        """Move picker to target. Reward shaped by whether move is productive."""
         target_row = action.row
         target_col = action.col
         if target_row is None or target_col is None:
@@ -591,8 +594,60 @@ class DarkStoreEnvironment(Environment):
             )
 
         path_cost = _bfs_path_cost(self._picker_pos, target)
+        old_pos = self._picker_pos
         self._picker_pos = target
-        return -0.05 * path_cost, None
+
+        # Base cost always negative. Smaller penalty if moving toward something useful.
+        base_cost = -0.05 * path_cost
+        needed_targets = self._get_needed_targets()
+        if needed_targets:
+            old_min_dist = min(_manhattan(old_pos, t) for t in needed_targets)
+            new_min_dist = min(_manhattan(target, t) for t in needed_targets)
+            if new_min_dist < old_min_dist:
+                # Productive move — reduce penalty by half
+                return base_cost * 0.5, None
+            elif new_min_dist > old_min_dist:
+                # Moving away — double the penalty
+                return base_cost * 2.0, None
+
+        return base_cost, None
+
+    def _get_needed_targets(self) -> List[Tuple[int, int]]:
+        """Get list of positions the picker should be heading toward."""
+        targets: List[Tuple[int, int]] = []
+
+        # Check if we have all items for any order — need to go to (0,0)
+        for order in self._orders.values():
+            if order.status != "pending":
+                continue
+            picked_counts: Dict[str, int] = {}
+            for pi in order.picked_items:
+                picked_counts[pi] = picked_counts.get(pi, 0) + 1
+            all_picked = True
+            for item in set(order.items):
+                if picked_counts.get(item, 0) < order.items.count(item):
+                    all_picked = False
+                    break
+            if all_picked:
+                targets.append((0, 0))  # go pack
+                return targets
+
+        # Otherwise find shelves with needed items
+        for order in self._orders.values():
+            if order.status != "pending":
+                continue
+            picked_counts: Dict[str, int] = {}
+            for pi in order.picked_items:
+                picked_counts[pi] = picked_counts.get(pi, 0) + 1
+            for item in order.items:
+                if picked_counts.get(item, 0) >= order.items.count(item):
+                    continue
+                for shelf in self._shelves:
+                    if shelf.item_name == item and shelf.stock > 0:
+                        targets.append((shelf.row, shelf.col))
+                        break
+
+        return targets if targets else [(0, 0)]
 
     def _handle_pick(
         self, action: DarkStoreAction
@@ -651,7 +706,7 @@ class DarkStoreEnvironment(Environment):
                     order.picked_items.append(item_name)
                     break  # only credit one order per pick
 
-        return 0.0, None
+        return +1.0, None  # +1.0 reward for each successful pick
 
     def _handle_pack(
         self, action: DarkStoreAction
@@ -692,7 +747,7 @@ class DarkStoreEnvironment(Environment):
             if item in self._picker_holding:
                 self._picker_holding.remove(item)
 
-        return 0.0, None
+        return +3.0, None  # +3.0 reward for starting to pack an order
 
     def _handle_assign_rider(
         self, action: DarkStoreAction
@@ -726,7 +781,7 @@ class DarkStoreEnvironment(Environment):
         rider.destination = order.customer_pos
         rider.delivery_stops = [(order.customer_pos, order_id)]
 
-        return 0.0, None
+        return +2.0, None  # +2.0 reward for dispatching a delivery
 
     def _handle_batch_delivery(
         self, action: DarkStoreAction
@@ -848,9 +903,11 @@ class DarkStoreEnvironment(Environment):
                             on_time=on_time,
                         ))
                         if on_time:
-                            tick_reward += 10.0
+                            # Continuous: more time left = higher reward (10 to 15)
+                            time_bonus = min(5.0, order.timer_ticks * 0.25)
+                            tick_reward += 10.0 + time_bonus
                         else:
-                            tick_reward += -15.0
+                            tick_reward += -5.0  # late delivery
                         # Batch bonus per order delivered in a batch
                         if order.is_batch:
                             tick_reward += 2.0
@@ -906,7 +963,7 @@ class DarkStoreEnvironment(Environment):
             # Penalize undelivered orders at episode end
             for order in self._orders.values():
                 if order.status not in ("delivered",):
-                    tick_reward += -15.0
+                    tick_reward += -5.0  # reduced from -15
                     self._completed.append(CompletedDeliveryInfo(
                         order_id=order.order_id,
                         on_time=False,
@@ -1257,6 +1314,33 @@ class DarkStoreEnvironment(Environment):
 
         # Reward
         lines.append(f"REWARD: {self._cumulative_reward:.2f}")
+
+        # WHAT TO DO NEXT — explicit guidance
+        lines.append("")
+        lines.append("--- WHAT TO DO NEXT ---")
+        hint = self._compute_action_hint()
+        if hint:
+            lines.append(f"SITUATION: {hint}")
+
+        # Show needed items with their shelf locations
+        for order in self._orders.values():
+            if order.status != "pending":
+                continue
+            picked_counts: Dict[str, int] = {}
+            for pi in order.picked_items:
+                picked_counts[pi] = picked_counts.get(pi, 0) + 1
+            unpicked = []
+            for item in order.items:
+                if picked_counts.get(item, 0) < order.items.count(item):
+                    # Find shelf
+                    for shelf in self._shelves:
+                        if shelf.item_name == item and shelf.stock > 0:
+                            unpicked.append(f"{item} at ({shelf.row},{shelf.col})")
+                            break
+                    else:
+                        unpicked.append(f"{item} STOCKOUT — restock needed")
+            if unpicked:
+                lines.append(f"  {order.order_id} still needs: {', '.join(unpicked)}")
 
         return "\n".join(lines)
 

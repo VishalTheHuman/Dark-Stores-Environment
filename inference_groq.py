@@ -30,9 +30,9 @@ from server.dark_store_environment import DarkStoreEnvironment
 # Configuration
 # ---------------------------------------------------------------------------
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-HF_TOKEN = os.getenv("HF_TOKEN")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:11434/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gemma2:27b")
+HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("GROQ_API_KEY") or "ollama"
 LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 
 API_KEY = HF_TOKEN  # OpenAI client uses this as the api_key
@@ -178,21 +178,45 @@ def parse_action_from_response(text: str) -> DarkStoreAction:
     Attempts to extract a JSON object from the response. Falls back to wait
     if parsing fails.
     """
-    text = text.strip()
+    import re
+    original = text.strip()
 
-    # Strip markdown code fences if present
+    # First try: find JSON in the FULL text (including inside think tags)
+    start = original.find("{")
+    end = original.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        json_str = original[start : end + 1]
+        # Find the LAST complete JSON object (after thinking, the action is usually last)
+        # Try from the end backwards
+        for i in range(len(original) - 1, -1, -1):
+            if original[i] == "}":
+                # Find matching opening brace
+                for j in range(i, -1, -1):
+                    if original[j] == "{":
+                        candidate = original[j : i + 1]
+                        try:
+                            data: Dict[str, Any] = json.loads(candidate)
+                            if "action" in data:
+                                return DarkStoreAction(**data)
+                        except (json.JSONDecodeError, Exception):
+                            pass
+                        break
+
+    # Second try: strip think tags, then look for JSON
+    text = re.sub(r"<think>.*?</think>", "", original, flags=re.DOTALL).strip()
+
+    # Strip markdown code fences
     if text.startswith("```"):
         lines = text.split("\n")
         lines = [l for l in lines if not l.strip().startswith("```")]
         text = "\n".join(lines).strip()
 
-    # Try to find JSON object in the text
     start = text.find("{")
     end = text.rfind("}")
     if start != -1 and end != -1 and end > start:
         json_str = text[start : end + 1]
         try:
-            data: Dict[str, Any] = json.loads(json_str)
+            data = json.loads(json_str)
             return DarkStoreAction(**data)
         except (json.JSONDecodeError, Exception):
             pass
