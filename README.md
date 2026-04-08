@@ -1,3 +1,16 @@
+---
+title: Dark Store Simulator
+emoji: 🏪
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+app_port: 8000
+base_path: /web
+tags:
+  - openenv
+---
+
 # 🏪 Dark Store Simulator
 
 > *Can an AI agent run a Zepto/Blinkit-style dark store — picking, packing, and delivering groceries in under 10 minutes?*
