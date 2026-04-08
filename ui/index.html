@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Store AI Agent Visualizer</title>
+    <title>Dark Store AI Visualizer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -11,117 +11,119 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Header Section -->
-        <header class="glass-header">
+        <!-- Main Top Bar -->
+        <header class="header panel">
             <div class="logo">
-                <h1>🏪 Dark Store <span class="accent">AI Agent Mode</span></h1>
+                <h1>🏪 Dark Store Operations</h1>
             </div>
             
             <div class="status-board">
                 <div class="stat-box">
-                    <span class="stat-label">Tick</span>
+                    <span class="stat-label">Time Tick</span>
                     <span class="stat-value" id="val-tick">0</span>
-                    <span class="stat-sub" id="val-ticks-remaining">/ 0</span>
+                    <span class="stat-sub" id="val-ticks-remaining">/ 0 remaining</span>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-label">Score</span>
+                    <span class="stat-label">Performance Score</span>
                     <span class="stat-value text-green" id="val-score">0.0</span>
                 </div>
+            </div>
+
+            <div class="action-controls">
+                <select id="task-select" class="clean-input">
+                    <option value="single_order">Single Order (Easy)</option>
+                    <option value="concurrent_orders">Concurrent Orders (Medium)</option>
+                    <option value="full_operations">Full Operations (Hard)</option>
+                </select>
+                <button type="button" class="btn btn-action" id="btn-run">▶ Start Auto-Manager</button>
+                <button type="button" class="btn btn-secondary" id="btn-stop" style="display:none;">🛑 Stop</button>
             </div>
         </header>
 
         <!-- Main Workspace -->
         <main class="main-workspace">
             
-            <!-- Left: Agent Panel -->
-            <section class="glass-panel agent-panel">
-                <div class="panel-header">
-                    <h2>🤖 Agent Configuration</h2>
-                </div>
-                <form id="agent-config-form" class="agent-form">
-                    <div class="form-row">
-                        <label>Task:</label>
-                        <select id="task-select" class="glass-input">
-                            <option value="single_order">Single Order (Easy)</option>
-                            <option value="concurrent_orders">Concurrent Orders (Medium)</option>
-                            <option value="full_operations">Full Operations (Hard)</option>
-                        </select>
-                    </div>
-                    <div class="form-row">
-                        <label>API Base URL:</label>
-                        <input type="text" id="api-base-url" class="glass-input" value="https://api.groq.com/openai/v1">
-                    </div>
-                    <div class="form-row">
-                        <label>Model Name:</label>
-                        <input type="text" id="model-name" class="glass-input" value="moonshotai/kimi-k2-instruct">
-                    </div>
-                    <div class="form-row">
-                        <label>API Key (GROQ / HF_TOKEN):</label>
-                        <input type="password" id="api-key" class="glass-input" placeholder="Your API key needed">
-                    </div>
-                    <button type="submit" class="btn btn-action w-100 mt-2" id="btn-run">▶ Run LLM Agent Evaluation</button>
-                    <button type="button" class="btn btn-secondary w-100 mt-2" id="btn-stop" style="display:none; color: red;">🛑 Disconnect</button>
-                </form>
-
-                <div class="panel-header mt-4">
-                    <h2>📝 Inference Stream Log</h2>
-                </div>
-                <div id="llm-log" class="llm-log-container layout-scroll">
-                    <!-- Logs injected via JS -->
-                </div>
-            </section>
-
-            <!-- Center: Maps -->
-            <section class="maps-container">
+            <!-- Center Visual Maps (Side-by-side) -->
+            <section class="visuals-container">
                 <!-- Warehouse -->
-                <div class="glass-panel map-panel">
+                <div class="panel map-panel">
                     <div class="panel-header">
-                        <h2>Warehouse Floor</h2>
-                        <span class="subtitle">10x8 Grid</span>
+                        <h2>🏬 Warehouse Floor</h2>
+                        <span class="subtitle">Robot Picker & Shelves</span>
                     </div>
                     <div id="warehouse-grid" class="grid-container warehouse"></div>
                 </div>
 
                 <!-- City Map -->
-                <div class="glass-panel map-panel mt-3">
+                <div class="panel map-panel">
                     <div class="panel-header">
-                        <h2>City Delivery Area</h2>
-                        <span class="subtitle">8x8 Grid</span>
+                        <h2>🏙️ City Area</h2>
+                        <span class="subtitle">Delivery Riders & Customers</span>
                     </div>
                     <div id="city-grid" class="grid-container city"></div>
                 </div>
             </section>
 
-            <!-- Right: Info Panel -->
-            <section class="glass-panel info-panel layout-scroll">
-                <div class="info-section alert-box" id="sys-message-box" style="margin-bottom: 20px; padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5);">
-                    <h3 style="margin:0; border:none; padding-bottom:5px; color: var(--accent-magenta);">System Status</h3>
-                    <div class="stat-val-text" id="val-text" style="font-size: 0.85rem;">Idle</div>
-                </div>
+            <!-- Dashboard Info -->
+            <section class="dashboard-container panel">
+                <div class="info-panel layout-scroll">
+                    <div class="info-section alert-box" id="sys-message-box">
+                        <h3>System Status</h3>
+                        <div id="val-text">Idle</div>
+                    </div>
 
-                <div class="info-section">
-                    <h3>Picker Inventory <span class="badge" id="badge-holding">0/5</span></h3>
-                    <ul id="list-holding" class="item-list"><li class="empty-msg">Empty</li></ul>
-                </div>
-                <div class="info-section">
-                    <h3>Pending Orders <span class="badge" id="badge-pending">0</span></h3>
-                    <ul id="list-pending" class="item-list"><li class="empty-msg">None</li></ul>
-                </div>
-                <div class="info-section">
-                    <h3>Packed Orders <span class="badge" id="badge-packed">0</span></h3>
-                    <ul id="list-packed" class="item-list"><li class="empty-msg">None</li></ul>
-                </div>
-                <div class="info-section">
-                    <h3>Active Deliveries <span class="badge" id="badge-deliveries">0</span></h3>
-                    <ul id="list-deliveries" class="item-list"><li class="empty-msg">None</li></ul>
-                </div>
-                <div class="info-section">
-                    <h3>Riders</h3>
-                    <ul id="list-riders" class="item-list"><li class="empty-msg">None</li></ul>
+                    <div class="info-section">
+                        <h3>🤖 Robot Inventory <span class="badge" id="badge-holding">0/5</span></h3>
+                        <ul id="list-holding" class="item-list"><li class="empty-msg">Empty</li></ul>
+                    </div>
+                    <div class="info-section">
+                        <h3>📝 Pending Orders <span class="badge" id="badge-pending">0</span></h3>
+                        <ul id="list-pending" class="item-list"><li class="empty-msg">None</li></ul>
+                    </div>
+                    <div class="info-section">
+                        <h3>📦 Packed & Ready <span class="badge" id="badge-packed">0</span></h3>
+                        <ul id="list-packed" class="item-list"><li class="empty-msg">None</li></ul>
+                    </div>
+                    <div class="info-section">
+                        <h3>🛵 Active Deliveries <span class="badge" id="badge-deliveries">0</span></h3>
+                        <ul id="list-deliveries" class="item-list"><li class="empty-msg">None</li></ul>
+                    </div>
+                    <div class="info-section">
+                        <h3>🧍 All Riders</h3>
+                        <ul id="list-riders" class="item-list"><li class="empty-msg">None</li></ul>
+                    </div>
                 </div>
             </section>
 
         </main>
+
+        <!-- Advanced AI Controls -->
+        <details class="advanced-panel panel">
+            <summary>⚙️ Advanced AI Setup & Logs</summary>
+            <div class="advanced-content">
+                <form id="agent-config-form" class="agent-form">
+                    <div class="form-row">
+                        <label>API Base URL:</label>
+                        <input type="text" id="api-base-url" class="clean-input" value="https://api.groq.com/openai/v1">
+                    </div>
+                    <div class="form-row">
+                        <label>Model Name:</label>
+                        <input type="text" id="model-name" class="clean-input" value="moonshotai/kimi-k2-instruct">
+                    </div>
+                    <div class="form-row">
+                        <label>API Key (GROQ / HF_TOKEN):</label>
+                        <input type="password" id="api-key" class="clean-input" placeholder="Your secret API key">
+                    </div>
+                </form>
+
+                <div class="log-area">
+                    <h3>Inference Log</h3>
+                    <div id="llm-log" class="llm-log-container layout-scroll">
+                        <!-- Logs injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </details>
     </div>
     
     <script src="app.js"></script>
