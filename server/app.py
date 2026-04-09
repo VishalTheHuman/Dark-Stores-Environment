@@ -78,10 +78,15 @@ from server.gradio_ui import demo
 app = gr.mount_gradio_app(app, demo, path="/web")
 
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 import os
 
 ui_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui")
 app.mount("/ui", StaticFiles(directory=ui_dir, html=True), name="ui")
+
+@app.get("/")
+async def read_root():
+    return RedirectResponse(url="/web")
 
 from fastapi import WebSocket, WebSocketDisconnect
 from openai import OpenAI
